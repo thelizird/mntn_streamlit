@@ -100,19 +100,23 @@ try:
     min_date = df['date'].min()
     max_date = df['date'].max()
 
-    date_range = st.sidebar.date_input(
-        "Select Date Range",
-        value=(min_date, max_date),
+    start_date = st.sidebar.date_input(
+        "Start Date",
+        value=min_date,
         min_value=min_date,
         max_value=max_date
     )
 
-    if len(date_range) == 2:
-        start_date, end_date = date_range
-        df_filtered = df[(df['date'] >= pd.Timestamp(start_date)) &
-                        (df['date'] <= pd.Timestamp(end_date))]
-    else:
-        df_filtered = df
+    end_date = st.sidebar.date_input(
+        "End Date",
+        value=max_date,
+        min_value=min_date,
+        max_value=max_date
+    )
+
+    # Filter data by date range
+    df_filtered = df[(df['date'] >= pd.Timestamp(start_date)) &
+                    (df['date'] <= pd.Timestamp(end_date))]
 
     # Campaign filter
     campaigns = df_filtered['campaign'].dropna().unique()
