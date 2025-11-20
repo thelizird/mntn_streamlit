@@ -19,12 +19,6 @@ st.markdown("""
     .main {
         padding: 0rem 1rem;
     }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
     h1 {
         color: #1f77b4;
         padding-bottom: 10px;
@@ -39,6 +33,35 @@ st.markdown("""
         padding: 15px;
         border-radius: 8px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .available-section {
+        background-color: #e8f5e9;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 5px solid #4caf50;
+        margin: 20px 0;
+    }
+    .unavailable-section {
+        background-color: #ffebee;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 5px solid #f44336;
+        margin: 20px 0;
+    }
+    .data-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin: 5px;
+    }
+    .badge-available {
+        background-color: #4caf50;
+        color: white;
+    }
+    .badge-missing {
+        background-color: #f44336;
+        color: white;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -59,7 +82,16 @@ try:
 
     # Dashboard Title
     st.title("📊 Marketing Performance Dashboard")
-    st.markdown("### CTV & Video Advertising Analytics")
+    st.markdown("### CTV & Video Advertising Analytics - Data Availability Report")
+
+    # Data availability badges at the top
+    st.markdown("""
+        <div style='background-color: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
+            <h4 style='margin-top: 0;'>📋 Quick Data Status</h4>
+            <span class='data-badge badge-available'>✅ 10 Metrics Available</span>
+            <span class='data-badge badge-missing'>❌ 27 Metrics Missing</span>
+        </div>
+    """, unsafe_allow_html=True)
 
     # Sidebar filters
     st.sidebar.header("🔍 Filters")
@@ -93,61 +125,50 @@ try:
         if selected_campaigns:
             df_filtered = df_filtered[df_filtered['campaign'].isin(selected_campaigns)]
 
-    # DMA filter
-    dmas = df_filtered['dma_name'].dropna().unique()
-    dmas = [d for d in dmas if d != 'unknown']
-    if len(dmas) > 0:
-        selected_dmas = st.sidebar.multiselect(
-            "Select Geographic Markets (DMA)",
-            options=sorted(dmas),
-            default=None
-        )
-        if selected_dmas:
-            df_filtered = df_filtered[df_filtered['dma_name'].isin(selected_dmas)]
-
-    # Calculate key metrics
-    total_spend = df_filtered['spend'].sum()
+    # Calculate available metrics
+    total_spend = df_filtered['campaigngroup_spend'].sum()
     total_impressions = df_filtered['impressions'].sum()
-    total_conversions = df_filtered['advertiser_conversions'].sum()
-
-    # Calculate weighted averages for rates
-    df_calc = df_filtered[df_filtered['spend'] > 0].copy()
-
-    # ROAS calculation (weighted by spend)
-    if total_spend > 0 and len(df_calc) > 0:
-        roas_values = df_calc[df_calc['advertiser_roas'] >= 0]['advertiser_roas']
-        roas_weights = df_calc[df_calc['advertiser_roas'] >= 0]['spend']
-        if len(roas_values) > 0 and roas_weights.sum() > 0:
-            avg_roas = np.average(roas_values, weights=roas_weights)
-        else:
-            avg_roas = 0
-    else:
-        avg_roas = 0
-
-    # CPA calculation
-    avg_cpa = total_spend / total_conversions if total_conversions > 0 else 0
 
     # CPM calculation
     cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0
 
     # Completed View Rate (weighted by impressions)
-    if total_impressions > 0 and len(df_calc) > 0:
-        cvr_values = df_calc[df_calc['advertiser_completedviewrate'] > 0]['advertiser_completedviewrate']
-        cvr_weights = df_calc[df_calc['advertiser_completedviewrate'] > 0]['impressions']
-        if len(cvr_values) > 0 and cvr_weights.sum() > 0:
-            avg_cvr = np.average(cvr_values, weights=cvr_weights)
+    if total_impressions > 0 and len(df_filtered) > 0:
+        cvr_data = df_filtered[df_filtered['campaigngroup_completedviewrate'] > 0]
+        if len(cvr_data) > 0:
+            avg_cvr = np.average(
+                cvr_data['campaigngroup_completedviewrate'],
+                weights=cvr_data['impressions']
+            )
         else:
             avg_cvr = 0
     else:
         avg_cvr = 0
 
-    # Conversion Rate
-    conversion_rate = (total_conversions / total_impressions * 100) if total_impressions > 0 else 0
+    # Total completed views
+    total_completed_views = df_filtered['campaigngroup_completedviews'].sum()
+
+    # Total users reached
+    total_users_reached = df_filtered['campaigngroup_usersreached'].sum()
+
+    # Total visits
+    total_visits = df_filtered['campaigngroup_visits'].sum()
+
+    # ============================================================================
+    # SECTION 1: AVAILABLE METRICS AND DATA
+    # ============================================================================
+
+    st.markdown("""
+        <div class='available-section'>
+            <h2 style='color: #2e7d32; margin-top: 0;'>✅ AVAILABLE DATA & METRICS</h2>
+            <p style='font-size: 16px;'>These metrics are populated and ready for analysis</p>
+        </div>
+    """, unsafe_allow_html=True)
 
     # ==================== KEY PERFORMANCE INDICATORS ====================
-    st.markdown("## 📈 Key Performance Indicators")
+    st.markdown("## 📈 Key Performance Indicators (Available)")
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric(
@@ -165,47 +186,40 @@ try:
 
     with col3:
         st.metric(
-            label="Total Conversions",
-            value=f"{int(total_conversions):,}",
-            help="Total number of conversions generated"
-        )
-
-    with col4:
-        st.metric(
-            label="Average ROAS",
-            value=f"{avg_roas:.2f}x" if avg_roas > 0 else "N/A",
-            help="Return on Ad Spend - Revenue generated per dollar spent"
-        )
-
-    with col5:
-        st.metric(
-            label="Average CPA",
-            value=f"${avg_cpa:.2f}" if avg_cpa > 0 else "N/A",
-            help="Cost Per Acquisition - Average cost to acquire a customer"
-        )
-
-    # Secondary KPIs
-    col6, col7, col8 = st.columns(3)
-
-    with col6:
-        st.metric(
             label="CPM",
             value=f"${cpm:.2f}",
             help="Cost Per Thousand Impressions"
         )
 
-    with col7:
+    with col4:
         st.metric(
             label="Completed View Rate",
             value=f"{avg_cvr*100:.2f}%" if avg_cvr > 0 else "N/A",
             help="Percentage of video ads viewed to completion"
         )
 
-    with col8:
+    # Secondary metrics
+    col5, col6, col7 = st.columns(3)
+
+    with col5:
         st.metric(
-            label="Conversion Rate",
-            value=f"{conversion_rate:.3f}%",
-            help="Percentage of impressions that resulted in conversions"
+            label="Total Completed Views",
+            value=f"{int(total_completed_views):,}",
+            help="Total number of video ads completed"
+        )
+
+    with col6:
+        st.metric(
+            label="Users Reached",
+            value=f"{int(total_users_reached):,}",
+            help="Total unique users reached by campaigns"
+        )
+
+    with col7:
+        st.metric(
+            label="Total Visits",
+            value=f"{int(total_visits):,}",
+            help="Total site visits generated"
         )
 
     st.markdown("---")
@@ -215,20 +229,18 @@ try:
 
     # Aggregate by date
     daily_performance = df_filtered.groupby('date').agg({
-        'spend': 'sum',
+        'campaigngroup_spend': 'sum',
         'impressions': 'sum',
-        'advertiser_conversions': 'sum'
+        'campaigngroup_completedviews': 'sum',
+        'campaigngroup_usersreached': 'sum'
     }).reset_index()
 
-    daily_performance['cpa'] = daily_performance.apply(
-        lambda x: x['spend'] / x['advertiser_conversions'] if x['advertiser_conversions'] > 0 else 0,
-        axis=1
-    )
+    daily_performance.columns = ['date', 'spend', 'impressions', 'completed_views', 'users_reached']
 
     col_trend1, col_trend2 = st.columns(2)
 
     with col_trend1:
-        # Spend & Conversions trend
+        # Spend trend
         fig_spend = go.Figure()
         fig_spend.add_trace(go.Scatter(
             x=daily_performance['date'],
@@ -249,30 +261,7 @@ try:
         st.plotly_chart(fig_spend, use_container_width=True)
 
     with col_trend2:
-        # Conversions trend
-        fig_conv = go.Figure()
-        fig_conv.add_trace(go.Scatter(
-            x=daily_performance['date'],
-            y=daily_performance['advertiser_conversions'],
-            name='Conversions',
-            line=dict(color='#2ca02c', width=3),
-            fill='tozeroy',
-            fillcolor='rgba(44, 160, 44, 0.2)'
-        ))
-        fig_conv.update_layout(
-            title='Daily Conversions Trend',
-            xaxis_title='Date',
-            yaxis_title='Conversions',
-            hovermode='x unified',
-            template='plotly_white',
-            height=350
-        )
-        st.plotly_chart(fig_conv, use_container_width=True)
-
-    # Impressions and CPA trend
-    col_trend3, col_trend4 = st.columns(2)
-
-    with col_trend3:
+        # Impressions trend
         fig_imp = go.Figure()
         fig_imp.add_trace(go.Bar(
             x=daily_performance['date'],
@@ -290,25 +279,47 @@ try:
         )
         st.plotly_chart(fig_imp, use_container_width=True)
 
-    with col_trend4:
-        fig_cpa = go.Figure()
-        daily_cpa = daily_performance[daily_performance['cpa'] > 0]
-        fig_cpa.add_trace(go.Scatter(
-            x=daily_cpa['date'],
-            y=daily_cpa['cpa'],
-            name='CPA',
-            line=dict(color='#d62728', width=3),
-            mode='lines+markers'
+    # Completed views and users reached
+    col_trend3, col_trend4 = st.columns(2)
+
+    with col_trend3:
+        fig_views = go.Figure()
+        fig_views.add_trace(go.Scatter(
+            x=daily_performance['date'],
+            y=daily_performance['completed_views'],
+            name='Completed Views',
+            line=dict(color='#2ca02c', width=3),
+            fill='tozeroy',
+            fillcolor='rgba(44, 160, 44, 0.2)'
         ))
-        fig_cpa.update_layout(
-            title='Daily CPA Trend',
+        fig_views.update_layout(
+            title='Daily Completed Views',
             xaxis_title='Date',
-            yaxis_title='CPA ($)',
+            yaxis_title='Completed Views',
             hovermode='x unified',
             template='plotly_white',
             height=350
         )
-        st.plotly_chart(fig_cpa, use_container_width=True)
+        st.plotly_chart(fig_views, use_container_width=True)
+
+    with col_trend4:
+        fig_users = go.Figure()
+        fig_users.add_trace(go.Scatter(
+            x=daily_performance['date'],
+            y=daily_performance['users_reached'],
+            name='Users Reached',
+            line=dict(color='#9467bd', width=3),
+            mode='lines+markers'
+        ))
+        fig_users.update_layout(
+            title='Daily Users Reached',
+            xaxis_title='Date',
+            yaxis_title='Users Reached',
+            hovermode='x unified',
+            template='plotly_white',
+            height=350
+        )
+        st.plotly_chart(fig_users, use_container_width=True)
 
     st.markdown("---")
 
@@ -317,19 +328,22 @@ try:
 
     # Campaign-level aggregation
     campaign_perf = df_filtered[df_filtered['campaign'].notna()].groupby('campaign').agg({
-        'spend': 'sum',
+        'campaigngroup_spend': 'sum',
         'impressions': 'sum',
-        'advertiser_conversions': 'sum',
-        'campaigngroup_completedviews': 'sum'
+        'campaigngroup_completedviews': 'sum',
+        'campaigngroup_usersreached': 'sum',
+        'campaigngroup_visits': 'sum'
     }).reset_index()
 
-    campaign_perf['cpa'] = campaign_perf.apply(
-        lambda x: x['spend'] / x['advertiser_conversions'] if x['advertiser_conversions'] > 0 else 0,
-        axis=1
-    )
+    campaign_perf.columns = ['campaign', 'spend', 'impressions', 'completed_views', 'users_reached', 'visits']
 
     campaign_perf['cpm'] = campaign_perf.apply(
         lambda x: (x['spend'] / x['impressions'] * 1000) if x['impressions'] > 0 else 0,
+        axis=1
+    )
+
+    campaign_perf['completion_rate'] = campaign_perf.apply(
+        lambda x: (x['completed_views'] / x['impressions'] * 100) if x['impressions'] > 0 else 0,
         axis=1
     )
 
@@ -358,191 +372,192 @@ try:
         st.plotly_chart(fig_camp_spend, use_container_width=True)
 
     with col_camp2:
-        # Campaign efficiency - CPA
-        campaign_cpa = campaign_perf[campaign_perf['cpa'] > 0].sort_values('cpa').head(10)
-        fig_camp_cpa = px.bar(
-            campaign_cpa,
-            x='cpa',
+        # Campaign efficiency - best completion rates
+        campaign_comp = campaign_perf[campaign_perf['completion_rate'] > 0].sort_values('completion_rate', ascending=False).head(10)
+        fig_camp_comp = px.bar(
+            campaign_comp,
+            x='completion_rate',
             y='campaign',
             orientation='h',
-            title='Top 10 Most Efficient Campaigns (Lowest CPA)',
-            labels={'cpa': 'CPA ($)', 'campaign': 'Campaign'},
-            color='cpa',
-            color_continuous_scale='Greens_r'
+            title='Top 10 Campaigns by Completion Rate',
+            labels={'completion_rate': 'Completion Rate (%)', 'campaign': 'Campaign'},
+            color='completion_rate',
+            color_continuous_scale='Greens'
         )
-        fig_camp_cpa.update_layout(
+        fig_camp_comp.update_layout(
             height=500,
             showlegend=False,
-            yaxis={'categoryorder': 'total descending'},
+            yaxis={'categoryorder': 'total ascending'},
             template='plotly_white'
         )
-        st.plotly_chart(fig_camp_cpa, use_container_width=True)
+        st.plotly_chart(fig_camp_comp, use_container_width=True)
 
     # Campaign metrics table
     st.markdown("### 📊 Detailed Campaign Metrics")
     campaign_display = campaign_perf.copy()
     campaign_display['spend'] = campaign_display['spend'].apply(lambda x: f"${x:,.2f}")
     campaign_display['impressions'] = campaign_display['impressions'].apply(lambda x: f"{int(x):,}")
-    campaign_display['advertiser_conversions'] = campaign_display['advertiser_conversions'].apply(lambda x: f"{int(x):,}")
-    campaign_display['cpa'] = campaign_display['cpa'].apply(lambda x: f"${x:.2f}" if x > 0 else "N/A")
+    campaign_display['completed_views'] = campaign_display['completed_views'].apply(lambda x: f"{int(x):,}")
+    campaign_display['users_reached'] = campaign_display['users_reached'].apply(lambda x: f"{int(x):,}")
+    campaign_display['visits'] = campaign_display['visits'].apply(lambda x: f"{int(x):,}")
     campaign_display['cpm'] = campaign_display['cpm'].apply(lambda x: f"${x:.2f}")
+    campaign_display['completion_rate'] = campaign_display['completion_rate'].apply(lambda x: f"{x:.2f}%")
 
-    campaign_display.columns = ['Campaign', 'Spend', 'Impressions', 'Conversions', 'Completed Views', 'CPA', 'CPM']
+    campaign_display.columns = ['Campaign', 'Spend', 'Impressions', 'Completed Views', 'Users Reached', 'Visits', 'CPM', 'Completion Rate']
     st.dataframe(campaign_display, use_container_width=True, height=400)
 
     st.markdown("---")
 
-    # ==================== GEOGRAPHIC PERFORMANCE ====================
-    st.markdown("## 🗺️ Geographic Performance (DMA Analysis)")
+    # ============================================================================
+    # SECTION 2: UNAVAILABLE METRICS (DATA GAPS)
+    # ============================================================================
 
-    dma_perf = df_filtered[
-        (df_filtered['dma_name'].notna()) &
-        (df_filtered['dma_name'] != 'unknown')
-    ].groupby('dma_name').agg({
-        'spend': 'sum',
-        'impressions': 'sum',
-        'dma_conversions': 'sum'
-    }).reset_index()
+    st.markdown("""
+        <div class='unavailable-section'>
+            <h2 style='color: #c62828; margin-top: 0;'>❌ MISSING DATA & METRICS</h2>
+            <p style='font-size: 16px;'><strong>Action Required:</strong> The following metrics have no data in the CSV. Share this with your team to identify data collection gaps.</p>
+        </div>
+    """, unsafe_allow_html=True)
 
-    dma_perf['cpa'] = dma_perf.apply(
-        lambda x: x['spend'] / x['dma_conversions'] if x['dma_conversions'] > 0 else 0,
-        axis=1
-    )
+    # Create tabs for different categories of missing data
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "🎯 Conversion Metrics",
+        "💰 Revenue Metrics",
+        "🗺️ Geographic Data",
+        "🎨 Creative Data"
+    ])
 
-    dma_perf['conversion_rate'] = dma_perf.apply(
-        lambda x: (x['dma_conversions'] / x['impressions'] * 100) if x['impressions'] > 0 else 0,
-        axis=1
-    )
+    with tab1:
+        st.markdown("### ❌ Missing Conversion & Performance Metrics")
+        st.markdown("""
+            These metrics are critical for measuring campaign effectiveness but are **not available** in your data:
 
-    dma_perf = dma_perf.sort_values('spend', ascending=False)
+            #### Advertiser-Level Metrics (All Missing)
+            - **Conversions** (`advertiser_conversions`) - Total customer conversions
+            - **CPA** (`advertiser_cpa`) - Cost Per Acquisition
+            - **Conversion Rate** (`advertiser_impressionconversionrate`) - Impression to conversion %
+            - **Site Visitors** (`advertiser_sitevisitors`) - Unique site visitors
+            - **Visits** (`advertiser_visits`) - Total site visits
+            - **Conversion Assists** (`advertiser_conversionassists`) - Assisted conversions
 
-    if len(dma_perf) > 0:
-        col_geo1, col_geo2 = st.columns(2)
+            #### Campaign Group Conversions (Missing)
+            - **Campaign Group Conversions** (`campaigngroup_conversions` column doesn't exist)
+            - **User Conversion Rate** (`campaigngroup_userconversionrate`)
+            - **Visit Conversion Rate** (`campaigngroup_visitconversionrate`)
 
-        with col_geo1:
-            # Geographic spend distribution
-            fig_geo_spend = px.pie(
-                dma_perf.head(8),
-                values='spend',
-                names='dma_name',
-                title='Spend Distribution by Top Markets',
-                color_discrete_sequence=px.colors.qualitative.Set3
-            )
-            fig_geo_spend.update_traces(textposition='inside', textinfo='percent+label')
-            fig_geo_spend.update_layout(height=450, template='plotly_white')
-            st.plotly_chart(fig_geo_spend, use_container_width=True)
+            #### Creative-Level Conversions (All Missing)
+            - **Creative Conversions** (`creative_conversions`)
+            - **Creative CPA** (`creative_cpa`)
+            - **Creative Conversion Rates** (user and visit conversion rates)
+        """)
 
-        with col_geo2:
-            # Top markets by conversions
-            dma_conv = dma_perf.sort_values('dma_conversions', ascending=False).head(10)
-            fig_geo_conv = px.bar(
-                dma_conv,
-                x='dma_conversions',
-                y='dma_name',
-                orientation='h',
-                title='Top 10 Markets by Conversions',
-                labels={'dma_conversions': 'Conversions', 'dma_name': 'Market'},
-                color='dma_conversions',
-                color_continuous_scale='Viridis'
-            )
-            fig_geo_conv.update_layout(
-                height=450,
-                showlegend=False,
-                yaxis={'categoryorder': 'total ascending'},
-                template='plotly_white'
-            )
-            st.plotly_chart(fig_geo_conv, use_container_width=True)
+        st.warning("⚠️ **Impact:** Without conversion data, you cannot calculate ROAS, CPA, or measure campaign ROI accurately.")
 
-        # Geographic metrics table
-        st.markdown("### 📊 Detailed Geographic Metrics")
-        dma_display = dma_perf.copy()
-        dma_display['spend'] = dma_display['spend'].apply(lambda x: f"${x:,.2f}")
-        dma_display['impressions'] = dma_display['impressions'].apply(lambda x: f"{int(x):,}")
-        dma_display['dma_conversions'] = dma_display['dma_conversions'].apply(lambda x: f"{int(x):,}")
-        dma_display['cpa'] = dma_display['cpa'].apply(lambda x: f"${x:.2f}" if x > 0 else "N/A")
-        dma_display['conversion_rate'] = dma_display['conversion_rate'].apply(lambda x: f"{x:.3f}%")
+    with tab2:
+        st.markdown("### ❌ Missing Revenue & ROI Metrics")
+        st.markdown("""
+            Revenue and return metrics are **not available** in your data:
 
-        dma_display.columns = ['Market (DMA)', 'Spend', 'Impressions', 'Conversions', 'CPA', 'Conversion Rate']
-        st.dataframe(dma_display, use_container_width=True, height=350)
-    else:
-        st.info("No geographic data available for the selected filters.")
+            #### Revenue Metrics
+            - **Average Order Value (AOV)** (`advertiser_averageordervalue`) - Average purchase value
+            - **ROAS** (`advertiser_roas`, `campaigngroup_roas`, `creative_roas`) - Return on Ad Spend
+            - **ROI** (`advertiser_roi`) - Return on Investment percentage
 
+            #### Note on ROI Data
+            - `campaigngroup_roi` exists but all values are `-1` (invalid/placeholder data)
+            - This suggests ROI tracking may be configured but not calculating properly
+        """)
+
+        st.warning("⚠️ **Impact:** Cannot measure revenue generated or calculate true marketing ROI.")
+
+    with tab3:
+        st.markdown("### ❌ Missing Geographic (DMA) Data")
+        st.markdown("""
+            **No geographic data is available** in your dataset:
+
+            #### DMA-Level Metrics (All Missing)
+            - **DMA Names** (`dma_name`) - No market identifiers
+            - **DMA Conversions** (`dma_conversions`)
+            - **DMA Impressions** (`dma_impressions`)
+            - **DMA Completed Views** (`dma_completedviews`)
+            - **DMA Completion Rate** (`dma_completedviewrate`)
+            - **DMA AOV** (`dma_averageordervalue`)
+
+            #### Geographic Analysis
+            Current Status: **0 unique DMAs** (excluding 'unknown')
+        """)
+
+        st.warning("⚠️ **Impact:** Cannot analyze performance by geographic market or optimize regional spend.")
+
+    with tab4:
+        st.markdown("### ❌ Missing Creative Performance Data")
+        st.markdown("""
+            **No creative-level data is available** in your dataset:
+
+            #### Creative Identification
+            - **Creative Names** (`creative_name`) - No creative identifiers in data
+            - Current Status: **0 unique creatives**
+
+            #### Creative Performance Metrics (All Missing)
+            - **Creative Spend** (`creative_spend`)
+            - **Creative Impressions** (implicit, no data)
+            - **Creative Completed Views** (`creative_completedviews`)
+            - **Creative Completion Rate** (`creative_completedviewrate`)
+            - **Creative Conversions** (`creative_conversions`)
+            - **Creative CPA** (`creative_cpa`)
+            - **Creative ROAS** (`creative_roas`)
+            - **Creative ROI** (`creative_roi`)
+            - **Creative Users Reached** (`creative_usersreached`)
+            - **Creative Visits** (`creative_visits`)
+        """)
+
+        st.warning("⚠️ **Impact:** Cannot A/B test creatives or identify best-performing ad assets.")
+
+    # Summary recommendations
     st.markdown("---")
+    st.markdown("## 📋 Data Collection Recommendations")
 
-    # ==================== CREATIVE PERFORMANCE ====================
-    st.markdown("## 🎨 Creative Performance")
+    col_rec1, col_rec2 = st.columns(2)
 
-    creative_perf = df_filtered[df_filtered['creative_name'].notna()].groupby('creative_name').agg({
-        'spend': 'sum',
-        'impressions': 'sum',
-        'creative_conversions': 'sum',
-        'creative_completedviews': 'sum'
-    }).reset_index()
+    with col_rec1:
+        st.markdown("""
+            ### 🔴 Critical Priorities
+            1. **Enable Conversion Tracking**
+               - Set up pixel tracking or API integration
+               - Track conversions at advertiser, campaign, and creative levels
 
-    creative_perf['ctr'] = creative_perf.apply(
-        lambda x: (x['creative_completedviews'] / x['impressions'] * 100) if x['impressions'] > 0 else 0,
-        axis=1
-    )
+            2. **Connect Revenue Data**
+               - Link sales/revenue data to campaigns
+               - Enable ROAS and AOV calculations
 
-    creative_perf['conversion_rate'] = creative_perf.apply(
-        lambda x: (x['creative_conversions'] / x['impressions'] * 100) if x['impressions'] > 0 else 0,
-        axis=1
-    )
+            3. **Fix ROI Calculation**
+               - Current ROI values are all `-1`
+               - Check MNTN platform configuration
+        """)
 
-    creative_perf = creative_perf.sort_values('impressions', ascending=False)
+    with col_rec2:
+        st.markdown("""
+            ### 🟡 Important Enhancements
+            4. **Add Geographic Tracking**
+               - Enable DMA-level reporting in MNTN
+               - Required for regional optimization
 
-    if len(creative_perf) > 0:
-        col_cre1, col_cre2 = st.columns(2)
+            5. **Enable Creative Reporting**
+               - Add creative identifiers to data export
+               - Track creative-level performance
 
-        with col_cre1:
-            # Top creatives by impressions
-            fig_cre_imp = px.bar(
-                creative_perf.head(10),
-                x='impressions',
-                y='creative_name',
-                orientation='h',
-                title='Top 10 Creatives by Impressions',
-                labels={'impressions': 'Impressions', 'creative_name': 'Creative'},
-                color='impressions',
-                color_continuous_scale='Purples'
-            )
-            fig_cre_imp.update_layout(
-                height=450,
-                showlegend=False,
-                yaxis={'categoryorder': 'total ascending'},
-                template='plotly_white'
-            )
-            st.plotly_chart(fig_cre_imp, use_container_width=True)
-
-        with col_cre2:
-            # Top creatives by completion rate
-            creative_ctr = creative_perf[creative_perf['ctr'] > 0].sort_values('ctr', ascending=False).head(10)
-            fig_cre_ctr = px.bar(
-                creative_ctr,
-                x='ctr',
-                y='creative_name',
-                orientation='h',
-                title='Top 10 Creatives by Completion Rate',
-                labels={'ctr': 'Completion Rate (%)', 'creative_name': 'Creative'},
-                color='ctr',
-                color_continuous_scale='Oranges'
-            )
-            fig_cre_ctr.update_layout(
-                height=450,
-                showlegend=False,
-                yaxis={'categoryorder': 'total ascending'},
-                template='plotly_white'
-            )
-            st.plotly_chart(fig_cre_ctr, use_container_width=True)
-    else:
-        st.info("No creative data available for the selected filters.")
+            6. **Enhanced Visitor Tracking**
+               - Site visitor and visit metrics
+               - Conversion assist attribution
+        """)
 
     # Footer
     st.markdown("---")
     st.markdown("""
         <div style='text-align: center; color: #7f8c8d; padding: 20px;'>
-            <p>Marketing Performance Dashboard | Data Source: MNTN Platform</p>
+            <p><strong>Marketing Performance Dashboard</strong> | Data Source: MNTN Platform</p>
             <p>Last Updated: {}</p>
+            <p style='font-size: 12px;'>📊 Available Metrics: 10 | ❌ Missing Metrics: 27 | 📈 Data Coverage: 27%</p>
         </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
 
