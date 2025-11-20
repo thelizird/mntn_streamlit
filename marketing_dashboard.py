@@ -167,28 +167,28 @@ try:
         st.metric(
             label="Total Spend",
             value=f"${total_spend:,.2f}",
-            help="Total advertising spend across all campaigns"
+            help="Campaign Group Spend: The amount spent in total on all campaign groups"
         )
 
     with col2:
         st.metric(
             label="Total Impressions",
             value=f"{total_impressions:,.0f}",
-            help="Total number of ad impressions served"
+            help="Impressions: The number of ad impressions served across all campaigns"
         )
 
     with col3:
         st.metric(
             label="CPM",
             value=f"${cpm:.2f}",
-            help="Cost Per Thousand Impressions"
+            help="Cost Per Mille (1,000 impressions): Calculated as (Total Spend / Impressions) × 1,000"
         )
 
     with col4:
         st.metric(
             label="Completed View Rate",
             value=f"{avg_cvr*100:.2f}%" if avg_cvr > 0 else "N/A",
-            help="Percentage of video ads viewed to completion"
+            help="Campaign Group Completed View Rate: The rate of videos reaching completion (weighted average)"
         )
 
     # Secondary metrics
@@ -198,22 +198,48 @@ try:
         st.metric(
             label="Total Completed Views",
             value=f"{int(total_completed_views):,}",
-            help="Total number of video ads completed"
+            help="Campaign Group Completed Views: The number of videos reaching completion"
         )
 
     with col6:
         st.metric(
             label="Users Reached",
             value=f"{int(total_users_reached):,}",
-            help="Total unique users reached by campaigns"
+            help="Campaign Group Users Reached: The number of people who received ad impressions"
         )
 
     with col7:
         st.metric(
             label="Total Visits",
             value=f"{int(total_visits):,}",
-            help="Total site visits generated"
+            help="Campaign Group Visits: The number of verified visits to your site driven by MNTN campaigns"
         )
+
+    # Add insights summary
+    st.markdown("---")
+    st.markdown("### 💡 Available Data Insights")
+
+    col_insight1, col_insight2 = st.columns(2)
+
+    with col_insight1:
+        st.markdown("""
+            **What You Can Analyze:**
+            - **Campaign Efficiency**: Compare CPM across campaigns to identify cost-effective placements
+            - **Engagement Quality**: Track completed view rates to measure creative engagement
+            - **Audience Reach**: Monitor unique users reached and visit generation
+            - **Spend Trends**: Identify spending patterns and budget pacing over time
+            - **Video Performance**: Measure how well videos retain viewer attention through completion rates
+        """)
+
+    with col_insight2:
+        st.markdown("""
+            **Key Questions You Can Answer:**
+            - Which campaigns have the best video completion rates?
+            - What's the cost per completed view for each campaign?
+            - How many verified site visits are campaigns driving?
+            - Are certain campaigns more efficient at reaching users?
+            - What are the daily spending and impression delivery trends?
+        """)
 
     st.markdown("---")
 
@@ -421,22 +447,22 @@ try:
             **Critical for measuring campaign effectiveness:**
 
             #### Advertiser-Level Metrics (All Missing)
-            - **Conversions** (`advertiser_conversions`) - Total customer conversions
-            - **CPA** (`advertiser_cpa`) - Cost Per Acquisition
-            - **Conversion Rate** (`advertiser_impressionconversionrate`) - Impression to conversion %
-            - **Site Visitors** (`advertiser_sitevisitors`) - Unique site visitors
-            - **Visits** (`advertiser_visits`) - Total site visits
-            - **Conversion Assists** (`advertiser_conversionassists`) - Assisted conversions
+            - **Conversions** (`advertiser_conversions`) - The number of conversions delivered by MNTN after a Verified Visit
+            - **CPA** (`advertiser_cpa`) - The Cost per Verified Conversion
+            - **Impression Conversion Rate** (`advertiser_impressionconversionrate`) - The percentage of impressions that resulted in a conversion
+            - **Site Visitors** (`advertiser_sitevisitors`) - MNTN Driven Site Visitors
+            - **Visits** (`advertiser_visits`) - The number of verified visits
+            - **Conversion Assists** (`advertiser_conversionassists`) - The number of conversions that followed an assisted verified visit
 
             #### Campaign Group Conversions (Missing)
-            - **Campaign Group Conversions** (`campaigngroup_conversions` column doesn't exist)
-            - **User Conversion Rate** (`campaigngroup_userconversionrate`)
-            - **Visit Conversion Rate** (`campaigngroup_visitconversionrate`)
+            - **Campaign Group Conversions** (`campaigngroup_conversions`) - The number of conversions delivered by MNTN after a Verified Visit (campaign level)
+            - **User Conversion Rate** (`campaigngroup_userconversionrate`) - The number of users that converted
+            - **Visit Conversion Rate** (`campaigngroup_visitconversionrate`) - The percentage of visits that resulted in a conversion
 
             #### Creative-Level Conversions (All Missing)
-            - **Creative Conversions** (`creative_conversions`)
-            - **Creative CPA** (`creative_cpa`)
-            - **Creative Conversion Rates** (user and visit conversion rates)
+            - **Creative Conversions** (`creative_conversions`) - The number of conversions delivered by MNTN after a Verified Visit (creative level)
+            - **Creative CPA** (`creative_cpa`) - The Cost per Verified Conversion (creative level)
+            - **Creative Conversion Rates** - User and visit conversion rates at the creative level
         """)
 
         st.warning("⚠️ **Impact:** Without conversion data, you cannot calculate ROAS, CPA, or measure campaign ROI accurately.")
@@ -445,55 +471,63 @@ try:
         st.markdown("""
 
             #### Revenue Metrics
-            - **Average Order Value (AOV)** (`advertiser_averageordervalue`) - Average purchase value
-            - **ROAS** (`advertiser_roas`, `campaigngroup_roas`, `creative_roas`) - Return on Ad Spend
-            - **ROI** (`advertiser_roi`) - Return on Investment percentage
+            - **Average Order Value** (`advertiser_averageordervalue`) - The average amount spent on each conversion delivered by MNTN
+            - **Order Value** (`advertiser_ordervalue`, `campaigngroup_ordervalue`, `creative_ordervalue`) - The revenue delivered by MNTN
+            - **ROAS** (`advertiser_roas`, `campaigngroup_roas`, `creative_roas`) - The Return on Ad Spend (Revenue / Spend)
+            - **ROI** (`advertiser_roi`, `creative_roi`) - The Return on Investment
 
             #### Note on ROI Data
-            - `campaigngroup_roi` exists but all values are `-1` (invalid/placeholder data)
-            - This suggests ROI tracking may be configured but not calculating properly
+            - `campaigngroup_roi` exists in the data but all values are `-1` (invalid/placeholder)
+            - This suggests ROI tracking may be configured but not calculating properly in MNTN
+            - Requires proper conversion and revenue tracking to be enabled
         """)
 
-        st.warning("⚠️ **Impact:** Cannot measure revenue generated or calculate true marketing ROI.")
+        st.warning("⚠️ **Impact:** Cannot measure revenue generated, calculate true marketing ROI, or optimize for profitability.")
 
     with tab3:
         st.markdown("""
 
             #### DMA-Level Metrics (All Missing)
-            - **DMA Names** (`dma_name`) - No market identifiers
-            - **DMA Conversions** (`dma_conversions`)
-            - **DMA Impressions** (`dma_impressions`)
-            - **DMA Completed Views** (`dma_completedviews`)
-            - **DMA Completion Rate** (`dma_completedviewrate`)
-            - **DMA AOV** (`dma_averageordervalue`)
+            - **DMA Names** (`dma_name`) - The name of the Designated Market Area (geographic region)
+            - **DMA Conversions** (`dma_conversions`) - The number of conversions delivered by MNTN after a Verified Visit (by DMA)
+            - **DMA Impressions** (`dma_impressions`) - The number of ad impressions served (by DMA)
+            - **DMA Completed Views** (`dma_completedviews`) - The number of videos reaching completion (by DMA)
+            - **DMA Completion Rate** (`dma_completedviewrate`) - The rate of videos reaching completion (by DMA)
+            - **DMA Spend** (`dma_spend`) - The amount spent in total (by DMA)
+            - **DMA Users Reached** (`dma_usersreached`) - The number of people who received ad impressions (by DMA)
 
             #### Geographic Analysis
             Current Status: **0 unique DMAs** (excluding 'unknown')
+
+            DMA data enables geographic targeting optimization and regional performance analysis.
         """)
 
-        st.warning("⚠️ **Impact:** Cannot analyze performance by geographic market or optimize regional spend.")
+        st.warning("⚠️ **Impact:** Cannot analyze performance by geographic market, identify high-performing regions, or optimize regional spend allocation.")
 
     with tab4:
         st.markdown("""
 
             #### Creative Identification
-            - **Creative Names** (`creative_name`) - No creative identifiers in data
-            - Current Status: **0 unique creatives**
+            - **Creative Names** (`creative_name`) - The name of the creative ad asset
+            - **Creative Size** (`creative_size`) - The size of the creative in pixels (e.g., 1920x1080)
+            - Current Status: **0 unique creatives** in the dataset
 
             #### Creative Performance Metrics (All Missing)
-            - **Creative Spend** (`creative_spend`)
-            - **Creative Impressions** (implicit, no data)
-            - **Creative Completed Views** (`creative_completedviews`)
-            - **Creative Completion Rate** (`creative_completedviewrate`)
-            - **Creative Conversions** (`creative_conversions`)
-            - **Creative CPA** (`creative_cpa`)
-            - **Creative ROAS** (`creative_roas`)
-            - **Creative ROI** (`creative_roi`)
-            - **Creative Users Reached** (`creative_usersreached`)
-            - **Creative Visits** (`creative_visits`)
+            - **Creative Spend** (`creative_spend`) - The amount spent in total (by creative)
+            - **Creative Impressions** (`creative_impressions`) - The number of ad impressions served (by creative)
+            - **Creative Completed Views** (`creative_completedviews`) - The number of videos reaching completion (by creative)
+            - **Creative Completion Rate** (`creative_completedviewrate`) - The rate of videos reaching completion (by creative)
+            - **Creative Conversions** (`creative_conversions`) - The number of conversions delivered by MNTN after a Verified Visit (by creative)
+            - **Creative CPA** (`creative_cpa`) - The Cost per Verified Conversion (by creative)
+            - **Creative ROAS** (`creative_roas`) - The Verified Return on Ad Spend (by creative)
+            - **Creative ROI** (`creative_roi`) - The Return on Investment (by creative)
+            - **Creative Users Reached** (`creative_usersreached`) - The number of people who received ad impressions (by creative)
+            - **Creative Visits** (`creative_visits`) - The number of verified visits (by creative)
+
+            Creative-level data enables A/B testing, creative optimization, and identifying top-performing ad assets.
         """)
 
-        st.warning("⚠️ **Impact:** Cannot A/B test creatives or identify best-performing ad assets.")
+        st.warning("⚠️ **Impact:** Cannot A/B test creatives, compare creative performance, or identify which ad assets drive the best results.")
 
     # Summary recommendations
     st.markdown("---")
