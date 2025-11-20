@@ -158,13 +158,6 @@ try:
     # SECTION 1: AVAILABLE METRICS AND DATA
     # ============================================================================
 
-    st.markdown("""
-        <div class='available-section'>
-            <h2 style='color: #2e7d32; margin-top: 0;'>✅ AVAILABLE DATA & METRICS</h2>
-            <p style='font-size: 16px;'>These metrics are populated and ready for analysis</p>
-        </div>
-    """, unsafe_allow_html=True)
-
     # ==================== KEY PERFORMANCE INDICATORS ====================
     st.markdown("## 📈 Key Performance Indicators (Available)")
 
@@ -412,12 +405,8 @@ try:
     # SECTION 2: UNAVAILABLE METRICS (DATA GAPS)
     # ============================================================================
 
-    st.markdown("""
-        <div class='unavailable-section'>
-            <h2 style='color: #c62828; margin-top: 0;'>❌ MISSING DATA & METRICS</h2>
-            <p style='font-size: 16px;'><strong>Action Required:</strong> The following metrics have no data in the CSV. Share this with your team to identify data collection gaps.</p>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("## ❌ Missing Data & Metrics")
 
     # Create tabs for different categories of missing data
     tab1, tab2, tab3, tab4 = st.tabs([
@@ -428,9 +417,8 @@ try:
     ])
 
     with tab1:
-        st.markdown("### ❌ Missing Conversion & Performance Metrics")
         st.markdown("""
-            These metrics are critical for measuring campaign effectiveness but are **not available** in your data:
+            **Critical for measuring campaign effectiveness:**
 
             #### Advertiser-Level Metrics (All Missing)
             - **Conversions** (`advertiser_conversions`) - Total customer conversions
@@ -454,9 +442,7 @@ try:
         st.warning("⚠️ **Impact:** Without conversion data, you cannot calculate ROAS, CPA, or measure campaign ROI accurately.")
 
     with tab2:
-        st.markdown("### ❌ Missing Revenue & ROI Metrics")
         st.markdown("""
-            Revenue and return metrics are **not available** in your data:
 
             #### Revenue Metrics
             - **Average Order Value (AOV)** (`advertiser_averageordervalue`) - Average purchase value
@@ -471,9 +457,7 @@ try:
         st.warning("⚠️ **Impact:** Cannot measure revenue generated or calculate true marketing ROI.")
 
     with tab3:
-        st.markdown("### ❌ Missing Geographic (DMA) Data")
         st.markdown("""
-            **No geographic data is available** in your dataset:
 
             #### DMA-Level Metrics (All Missing)
             - **DMA Names** (`dma_name`) - No market identifiers
@@ -490,9 +474,7 @@ try:
         st.warning("⚠️ **Impact:** Cannot analyze performance by geographic market or optimize regional spend.")
 
     with tab4:
-        st.markdown("### ❌ Missing Creative Performance Data")
         st.markdown("""
-            **No creative-level data is available** in your dataset:
 
             #### Creative Identification
             - **Creative Names** (`creative_name`) - No creative identifiers in data
