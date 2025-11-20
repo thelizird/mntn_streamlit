@@ -346,6 +346,157 @@ try:
 
     st.markdown("---")
 
+    # ==================== CAMPAIGN COMPARISON OVER TIME ====================
+    st.markdown("## 📊 Campaign Comparison Over Time")
+    st.markdown("Compare individual campaign performance trends side-by-side")
+
+    # Aggregate by date and campaign
+    campaign_daily = df_filtered[df_filtered['campaign'].notna()].groupby(['date', 'campaign']).agg({
+        'campaigngroup_spend': 'sum',
+        'impressions': 'sum',
+        'campaigngroup_completedviews': 'sum',
+        'campaigngroup_usersreached': 'sum'
+    }).reset_index()
+
+    campaign_daily.columns = ['date', 'campaign', 'spend', 'impressions', 'completed_views', 'users_reached']
+
+    # Get unique campaigns for color assignment
+    unique_campaigns = campaign_daily['campaign'].unique()
+
+    col_comp1, col_comp2 = st.columns(2)
+
+    with col_comp1:
+        # Campaign spend comparison
+        fig_camp_spend_time = go.Figure()
+
+        for campaign in unique_campaigns:
+            campaign_data = campaign_daily[campaign_daily['campaign'] == campaign]
+            fig_camp_spend_time.add_trace(go.Scatter(
+                x=campaign_data['date'],
+                y=campaign_data['spend'],
+                name=campaign,
+                mode='lines+markers',
+                line=dict(width=2),
+                hovertemplate='%{y:$,.2f}<extra></extra>'
+            ))
+
+        fig_camp_spend_time.update_layout(
+            title='Daily Spend by Campaign',
+            xaxis_title='Date',
+            yaxis_title='Spend ($)',
+            hovermode='x unified',
+            template='plotly_white',
+            height=400,
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02
+            )
+        )
+        st.plotly_chart(fig_camp_spend_time, use_container_width=True)
+
+    with col_comp2:
+        # Campaign impressions comparison
+        fig_camp_imp_time = go.Figure()
+
+        for campaign in unique_campaigns:
+            campaign_data = campaign_daily[campaign_daily['campaign'] == campaign]
+            fig_camp_imp_time.add_trace(go.Scatter(
+                x=campaign_data['date'],
+                y=campaign_data['impressions'],
+                name=campaign,
+                mode='lines+markers',
+                line=dict(width=2),
+                hovertemplate='%{y:,.0f}<extra></extra>'
+            ))
+
+        fig_camp_imp_time.update_layout(
+            title='Daily Impressions by Campaign',
+            xaxis_title='Date',
+            yaxis_title='Impressions',
+            hovermode='x unified',
+            template='plotly_white',
+            height=400,
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02
+            )
+        )
+        st.plotly_chart(fig_camp_imp_time, use_container_width=True)
+
+    col_comp3, col_comp4 = st.columns(2)
+
+    with col_comp3:
+        # Campaign completed views comparison
+        fig_camp_views_time = go.Figure()
+
+        for campaign in unique_campaigns:
+            campaign_data = campaign_daily[campaign_daily['campaign'] == campaign]
+            fig_camp_views_time.add_trace(go.Scatter(
+                x=campaign_data['date'],
+                y=campaign_data['completed_views'],
+                name=campaign,
+                mode='lines+markers',
+                line=dict(width=2),
+                hovertemplate='%{y:,.0f}<extra></extra>'
+            ))
+
+        fig_camp_views_time.update_layout(
+            title='Daily Completed Views by Campaign',
+            xaxis_title='Date',
+            yaxis_title='Completed Views',
+            hovermode='x unified',
+            template='plotly_white',
+            height=400,
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02
+            )
+        )
+        st.plotly_chart(fig_camp_views_time, use_container_width=True)
+
+    with col_comp4:
+        # Campaign users reached comparison
+        fig_camp_users_time = go.Figure()
+
+        for campaign in unique_campaigns:
+            campaign_data = campaign_daily[campaign_daily['campaign'] == campaign]
+            fig_camp_users_time.add_trace(go.Scatter(
+                x=campaign_data['date'],
+                y=campaign_data['users_reached'],
+                name=campaign,
+                mode='lines+markers',
+                line=dict(width=2),
+                hovertemplate='%{y:,.0f}<extra></extra>'
+            ))
+
+        fig_camp_users_time.update_layout(
+            title='Daily Users Reached by Campaign',
+            xaxis_title='Date',
+            yaxis_title='Users Reached',
+            hovermode='x unified',
+            template='plotly_white',
+            height=400,
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02
+            )
+        )
+        st.plotly_chart(fig_camp_users_time, use_container_width=True)
+
+    st.markdown("---")
+
     # ==================== CAMPAIGN PERFORMANCE ====================
     st.markdown("## 🎯 Campaign Performance Analysis")
 
