@@ -2,6 +2,43 @@
 
 A professional, interactive marketing analytics dashboard built with Streamlit for analyzing MNTN CTV/video advertising campaign performance.
 
+## 🚀 Quick Start - GitHub Codespaces
+
+This dashboard is **optimized for GitHub Codespaces** and will work out of the box!
+
+### Running in Codespaces (Recommended)
+
+1. Open this repository in GitHub Codespaces
+2. Wait for the automatic dependency installation (handled by devcontainer)
+3. Run the dashboard using the launch script:
+   ```bash
+   ./run_dashboard.sh
+   ```
+   OR manually:
+   ```bash
+   streamlit run marketing_dashboard.py
+   ```
+4. When Streamlit starts, VS Code will show a notification about port 8501
+5. Click **"Open in Browser"** or go to the **Ports** tab and click the globe icon next to port 8501
+6. Your dashboard will open in a new browser tab!
+
+### Codespaces Optimizations Included
+
+- ✅ **Auto-configuration**: `.devcontainer/devcontainer.json` sets up the environment automatically
+- ✅ **Port forwarding**: Port 8501 is automatically forwarded and labeled
+- ✅ **Dependencies**: All packages are installed on container creation
+- ✅ **Streamlit config**: `.streamlit/config.toml` optimized for cloud environments
+- ✅ **Launch script**: `run_dashboard.sh` for easy one-command startup
+
+### Running Locally
+
+If you prefer to run locally instead of Codespaces:
+
+1. Clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Run: `streamlit run marketing_dashboard.py`
+4. Open browser to `http://localhost:8501`
+
 ## Features
 
 ### 📈 Key Performance Indicators
@@ -39,21 +76,21 @@ A professional, interactive marketing analytics dashboard built with Streamlit f
 - Completion rate analysis
 - Creative-level conversion tracking
 
-## Installation
+## 📁 Repository Structure
 
-1. Install required dependencies:
-```bash
-pip install -r requirements.txt
 ```
-
-## Usage
-
-Run the dashboard:
-```bash
-streamlit run marketing_dashboard.py
+mntn_streamlit/
+├── marketing_dashboard.py    # Main dashboard application
+├── mntn.csv                   # Your marketing data (required)
+├── requirements.txt           # Python dependencies
+├── run_dashboard.sh          # Launch script for Codespaces
+├── .streamlit/
+│   └── config.toml           # Streamlit configuration
+├── .devcontainer/
+│   └── devcontainer.json     # Codespaces container setup
+├── .gitignore                # Git ignore rules
+└── README.md                 # This file
 ```
-
-The dashboard will open in your default web browser at `http://localhost:8501`
 
 ## Interactive Filters
 
@@ -117,7 +154,31 @@ The dashboard follows marketing analytics best practices:
 4. **Geographic Expansion**: Identify high-converting markets for increased investment
 5. **Creative Testing**: Compare completion rates to identify winning creative assets
 
+## Troubleshooting
+
+### Dashboard Not Loading in Codespaces?
+1. Check the **Ports** tab in VS Code (bottom panel)
+2. Ensure port 8501 is listed and has visibility set to "Public"
+3. Click the globe icon to open in browser
+4. If issues persist, try: `Ctrl+C` to stop, then run `./run_dashboard.sh` again
+
+### "File not found" Error?
+Make sure `mntn.csv` is in the same directory as `marketing_dashboard.py`
+
+### Dependencies Not Installing?
+Codespaces should auto-install on startup. If not, manually run:
+```bash
+pip install -r requirements.txt
+```
+
+## Performance Notes
+
+- **Data Caching**: The dashboard uses `@st.cache_data` for optimal performance
+- **Large Files**: For files >100MB, consider filtering data before upload
+- **Refresh Rate**: Disabled `runOnSave` in Codespaces to prevent unnecessary reloads
+
 ---
 
 **Built with:** Streamlit, Pandas, Plotly
 **Data Source:** MNTN Platform
+**Optimized for:** GitHub Codespaces ☁️
